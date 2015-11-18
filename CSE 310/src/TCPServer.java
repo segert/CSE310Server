@@ -4,6 +4,7 @@
  * and open the template in the editor.
  */
 
+import java.io.*;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -14,6 +15,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.*;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,11 +28,7 @@ import java.util.logging.Logger;
  *       java TCPServer YOUR_PORT_NUMBER
  *
  */
-import java.io.*; // Provides for system input and output through data
-// streams, serialization and the file system
-import java.net.*; // Provides the classes for implementing networking
 // applications
-
 public class TCPServer {
 
     public static void main(String argv[]) throws Exception {
@@ -62,75 +61,106 @@ public class TCPServer {
 
             String[] args = clientSentence.split(" ");
             String command = args[0];
-            if (clientSentence.contains(" ")) {
-                command = args[0];
-                if (command.equals("put") && args.length == 4) {
-                    String record = args[1] + " " + args[2] + " " + args[3];
-                    put(record);
 
+            if (command.equals("put") && args.length == 4) {
+                String record = args[1] + " " + args[2] + " " + args[3];
+                put(record);
 
-            connectionSocket.close();
-                }
-                else if (command.equals("get") && args.length == 3) {
-                    String name = args[1];
-                    String type = args[2];
-                    String value = get(name, type);
-                    
-                    outToClient.writeBytes(value);
+                connectionSocket.close();
+            } else if (command.equals("get") && args.length == 3) {
+                String name = args[1];
+                String type = args[2];
+                String value = get(name, type);
 
-                    connectionSocket.close();
-                }
-                else if (command.equals("del") && args.length == 3) {
-                    String name = args[1];
-                    String type = args[2];
-                    String value = delete(name, type);
-                    
-                    outToClient.writeBytes(value);
+                outToClient.writeBytes(value);
 
-                    connectionSocket.close();
+                connectionSocket.close();
+            } else if (command.equals("del") && args.length == 3) {
+                String name = args[1];
+                String type = args[2];
+                String value = delete(name, type);
+
+                outToClient.writeBytes(value);
+
+                connectionSocket.close();
+            } else if (command.equals("browse") && args.length == 1) {
+                String[] recarray = browse();
+                String result = "";
+                if (recarray.length > 0) {
+                    for (int i = 0; i < recarray.length; i++) {
+                        result = result + "(" + recarray[i] + ") ";
+                    }
                 }
                 else
-                {
-                    connectionSocket.close();
-                }
-            }
+                    result = "database is empty";
 
-            
+                outToClient.writeBytes(result);
+
+                connectionSocket.close();
+            } else {
+                connectionSocket.close();
+            }
         }
 
         /*
          }*/
     }
 
+    public static String[] browse() throws FileNotFoundException, IOException {
+        File fileName = new File("recorddatabase.txt");
+
+        FileInputStream fis = new FileInputStream(fileName);
+        BufferedReader b = new BufferedReader(new InputStreamReader(fis));
+
+        String line = null;
+        String value = null;
+
+        ArrayList<String> records = new ArrayList();
+        while ((line = b.readLine()) != null) {
+            String[] record = line.split(" ");
+            records.add(record[0] + " " + record[2]);
+        }
+
+        b.close();
+
+        String[] recarray = new String[records.size()];
+        for (int i = 0; i < recarray.length; i++) {
+            recarray[i] = records.get(i);
+        }
+
+        return recarray;
+    }
+
     public static void put(String record) throws FileNotFoundException, IOException {
         File fileName = new File("recorddatabase.txt");
 
         FileWriter f = new FileWriter(fileName, true);
-        
+
         f.write("\n" + record);
         f.close();
 
     }
-    
+
     public static String get(String name, String type) throws FileNotFoundException, IOException {
         File fileName = new File("recorddatabase.txt");
 
         FileInputStream fis = new FileInputStream(fileName);
         BufferedReader b = new BufferedReader(new InputStreamReader(fis));
-        
+
         String line = null;
         String value = null;
-        while ((line = b.readLine()) != null)
-        {
-            String []record = line.split(" ");
-            if(record[0].equals(name) && record[2].equals(type))
+        while ((line = b.readLine()) != null) {
+            String[] record = line.split(" ");
+            if (record[0].equals(name) && record[2].equals(type)) {
                 value = record[1];
+            }
         }
-        
+
         b.close();
-        if(value.equals(null))
+        if (value.equals(null)) {
             value = "Not Found";
-        
+        }
+
         return value;
 
     }
@@ -138,25 +168,24 @@ public class TCPServer {
     public static String delete(String name, String type) throws FileNotFoundException, IOException {
         File inputFile = new File("recorddatabase.txt");
         File temp = new File("myTempFile.txt");
-        
+
         FileInputStream fis = new FileInputStream(inputFile);
         BufferedReader b = new BufferedReader(new InputStreamReader(fis));
-        
+
         String line = null;
         String remove = null;
-        while ((line = b.readLine()) != null)
-        {
-            String []record = line.split(" ");
-            if(record[0].equals(name) && record[2].equals(type))
+        while ((line = b.readLine()) != null) {
+            String[] record = line.split(" ");
+            if (record[0].equals(name) && record[2].equals(type)) {
                 remove = line;
+            }
         }
-        
-        if(remove == null)
-        {
+
+        if (remove == null) {
             remove = "Not Found";
             return remove;
         }
-        
+
         b.close();
 
         FileInputStream fis2 = new FileInputStream(inputFile);
@@ -188,7 +217,7 @@ public class TCPServer {
         bufferedReader.close();
 
         temp.delete();
-        
+
         return remove;
     }
 }

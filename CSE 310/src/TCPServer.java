@@ -67,20 +67,35 @@ public class TCPServer {
                 if (command.equals("put") && args.length == 4) {
                     String record = args[1] + " " + args[2] + " " + args[3];
                     put(record);
+
+
+            connectionSocket.close();
+                }
+                else if (command.equals("get") && args.length == 3) {
+                    String name = args[1];
+                    String type = args[2];
+                    String value = get(name, type);
+                    
+                    outToClient.writeBytes(value);
+
+                    connectionSocket.close();
+                }
+                else if (command.equals("del") && args.length == 3) {
+                    String name = args[1];
+                    String type = args[2];
+                    String value = delete(name, type);
+                    
+                    outToClient.writeBytes(value);
+
+                    connectionSocket.close();
+                }
+                else
+                {
+                    connectionSocket.close();
                 }
             }
-            // capitalize the sentence
-            capitalizedSentence = clientSentence.toUpperCase() + '\n';
 
-            System.out.println("Hello world!");
-                        //System.out.println("input is: " + clientSentence);
-            //System.out.println("output is: " + capitalizedSentence);
-
-            // send the capitalized sentence back to the  client
-            outToClient.writeBytes(capitalizedSentence);
-
-            // close the connection socket
-            connectionSocket.close();
+            
         }
 
         /*
@@ -90,40 +105,70 @@ public class TCPServer {
     public static void put(String record) throws FileNotFoundException, IOException {
         File fileName = new File("recorddatabase.txt");
 
-        //FileInputStream fis = new FileInputStream(fileName);
-
-        //String line = null;
-
-        //BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis));
-        //PrintWriter f = new PrintWriter(new BufferedWriter(new FileWriter(fileName, true)));
         FileWriter f = new FileWriter(fileName, true);
-        //BufferedWriter w = new BufferedWriter(f);
+        
         f.write("\n" + record);
         f.close();
 
-         //delete();
-       /* while ((line = bufferedReader.readLine()) != null) {
+    }
+    
+    public static String get(String name, String type) throws FileNotFoundException, IOException {
+        File fileName = new File("recorddatabase.txt");
 
-            System.out.println(line);
-        }*/
+        FileInputStream fis = new FileInputStream(fileName);
+        BufferedReader b = new BufferedReader(new InputStreamReader(fis));
+        
+        String line = null;
+        String value = null;
+        while ((line = b.readLine()) != null)
+        {
+            String []record = line.split(" ");
+            if(record[0].equals(name) && record[2].equals(type))
+                value = record[1];
+        }
+        
+        b.close();
+        if(value.equals(null))
+            value = "Not Found";
+        
+        return value;
 
     }
 
-    public static void delete() throws FileNotFoundException, IOException {
-        File inputFile = new File("src/cse/pkg310/recorddatabase.txt");
+    public static String delete(String name, String type) throws FileNotFoundException, IOException {
+        File inputFile = new File("recorddatabase.txt");
         File temp = new File("myTempFile.txt");
-
+        
         FileInputStream fis = new FileInputStream(inputFile);
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis));
+        BufferedReader b = new BufferedReader(new InputStreamReader(fis));
+        
+        String line = null;
+        String remove = null;
+        while ((line = b.readLine()) != null)
+        {
+            String []record = line.split(" ");
+            if(record[0].equals(name) && record[2].equals(type))
+                remove = line;
+        }
+        
+        if(remove == null)
+        {
+            remove = "Not Found";
+            return remove;
+        }
+        
+        b.close();
+
+        FileInputStream fis2 = new FileInputStream(inputFile);
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis2));
         BufferedWriter writer = new BufferedWriter(new FileWriter(temp));
 
-        String lineToRemove = "Hello World";
         String currentLine;
 
         while ((currentLine = bufferedReader.readLine()) != null) {
             // trim newline when comparing with lineToRemove
             String trimmedLine = currentLine.trim();
-            if (trimmedLine.equals(lineToRemove)) {
+            if (trimmedLine.equals(remove)) {
                 continue;
             }
             writer.write(currentLine + System.getProperty("line.separator"));
@@ -131,8 +176,8 @@ public class TCPServer {
         writer.close();
         bufferedReader.close();
 
-        fis = new FileInputStream(temp);
-        bufferedReader = new BufferedReader(new InputStreamReader(fis));
+        fis2 = new FileInputStream(temp);
+        bufferedReader = new BufferedReader(new InputStreamReader(fis2));
         writer = new BufferedWriter(new FileWriter(inputFile));
 
         while ((currentLine = bufferedReader.readLine()) != null) {
@@ -143,6 +188,8 @@ public class TCPServer {
         bufferedReader.close();
 
         temp.delete();
+        
+        return remove;
     }
 }
 

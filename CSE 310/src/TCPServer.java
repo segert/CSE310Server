@@ -68,15 +68,14 @@ public class TCPServer {
             if (command.equals("put") && args.length == 4) {
                 String record = args[1] + " " + args[2] + " " + args[3];
                 put(record);
-
+                outToClient.writeUTF("record "+record+" successfully put in database");
                 connectionSocket.close();
             } else if (command.equals("get") && args.length == 3) {
                 String name = args[1];
                 String type = args[2];
                 String value = get(name, type);
 
-                outToClient.writeBytes(value);
-
+                outToClient.writeUTF(value);
                 connectionSocket.close();
             } else if (command.equals("del") && args.length == 3) {
                 String name = args[1];
@@ -111,6 +110,9 @@ public class TCPServer {
     }
 
     public static String[] browse() throws FileNotFoundException, IOException {
+        // we use file as a database
+        // data format : name value type
+        // open file and establish input stream
         File fileName = new File("recorddatabase.txt");
 
         FileInputStream fis = new FileInputStream(fileName);
@@ -118,9 +120,13 @@ public class TCPServer {
 
         String line = null;
         String value = null;
-
+        // records array will holds the return value
         ArrayList<String> records = new ArrayList();
-        // read first blank line;
+
+        // basically we read a line which is "name value type"
+        // and we pharse the string to get name and type filed and put them in to a string
+
+        // pharse string
         while ((line = b.readLine()) != null) {
             // String[] record = line.split(" ");
             String[] record = new String[3];
@@ -129,10 +135,9 @@ public class TCPServer {
               record[i]=s;
               i++;
             }
-            System.out.println("record "+Arrays.deepToString(record));
-
+            // put name and type field in to array
             records.add(record[0] + " " + record[2]);
-            System.out.println("records: ");
+
             for(int j=0;j<records.size();j++){
               System.out.println(records.get(j));
             }
@@ -144,7 +149,6 @@ public class TCPServer {
         for (int i = 0; i < recarray.length; i++) {
             recarray[i] = records.get(i);
         }
-        System.out.println(Arrays.deepToString(recarray));
 
         return recarray;
     }
@@ -175,7 +179,7 @@ public class TCPServer {
         }
 
         b.close();
-        if (value.equals(null)) {
+        if (value==null) {
             value = "Not Found";
         }
 

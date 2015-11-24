@@ -82,7 +82,7 @@ public class TCPServer {
                 String type = args[2];
                 String value = delete(name, type);
 
-                outToClient.writeBytes(value);
+                outToClient.writeUTF("record: "+value+" deleted");
 
                 connectionSocket.close();
             } else if (command.equals("browse") && args.length == 1) {
@@ -179,8 +179,8 @@ public class TCPServer {
         }
 
         b.close();
-        if (value==null) {
-            value = "Not Found";
+        if (value == null) {
+            value = "Error: Record Not Found";
         }
 
         return value;
@@ -204,7 +204,7 @@ public class TCPServer {
         }
 
         if (remove == null) {
-            remove = "Not Found";
+            remove = "Error: Record Not Found";
             return remove;
         }
 

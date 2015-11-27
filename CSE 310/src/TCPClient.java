@@ -87,8 +87,8 @@ public class TCPClient {
           // close the socket
           clientSocket.close();
         }catch(ConnectException e){
-          System.out.println("Error:Connection refused, please check host name and port number");
-
+          System.out.println("Error:Connection refused, please check host name and port number system exiting");
+          System.exit(0);
         }
 
       }

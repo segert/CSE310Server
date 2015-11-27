@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.*;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,7 +25,7 @@ import java.util.logging.Logger;
  To compile on an allv machine, type
  *       javac TCPServer.java
  *
- * To run an allv machine, type 
+ * To run an allv machine, type
  *       java TCPServer YOUR_PORT_NUMBER
  *
  */
@@ -42,22 +43,24 @@ public class TCPServer {
 
         // create a server socket (TCP)
         ServerSocket welcomeSocket = new ServerSocket(lisPort);
-
+        System.out.println("Socket Created Please connect to Port: "+ welcomeSocket.getLocalPort());
         // loop infinitely (process clients sequentially)
         while (true) {
             // Wait and accept client connection
             Socket connectionSocket = welcomeSocket.accept();
+            System.out.println("connection accepted from "+connectionSocket.getRemoteSocketAddress());
 
             //create an input stream from the socket input stream
-            BufferedReader inFromClient = new BufferedReader(
-                    new InputStreamReader(connectionSocket.getInputStream()));
+            DataInputStream inFromClient = new DataInputStream(
+                    new DataInputStream(connectionSocket.getInputStream()));
 
             // create an output stream from the socket output stream
             DataOutputStream outToClient
                     = new DataOutputStream(connectionSocket.getOutputStream());
 
             // read a line form the input stream
-            clientSentence = inFromClient.readLine();
+            clientSentence = inFromClient.readUTF();
+            System.out.println("command recieve: "+ clientSentence);
 
             String[] args = clientSentence.split(" ");
             String command = args[0];
@@ -65,22 +68,21 @@ public class TCPServer {
             if (command.equals("put") && args.length == 4) {
                 String record = args[1] + " " + args[2] + " " + args[3];
                 put(record);
-
+                outToClient.writeUTF("record "+record+" successfully put in database");
                 connectionSocket.close();
             } else if (command.equals("get") && args.length == 3) {
                 String name = args[1];
                 String type = args[2];
                 String value = get(name, type);
 
-                outToClient.writeBytes(value);
-
+                outToClient.writeUTF(value);
                 connectionSocket.close();
             } else if (command.equals("del") && args.length == 3) {
                 String name = args[1];
                 String type = args[2];
                 String value = delete(name, type);
 
-                outToClient.writeBytes(value);
+                outToClient.writeUTF("record: "+value+" deleted");
 
                 connectionSocket.close();
             } else if (command.equals("browse") && args.length == 1) {
@@ -94,10 +96,11 @@ public class TCPServer {
                 else
                     result = "database is empty";
 
-                outToClient.writeBytes(result);
+                outToClient.writeUTF(result);
 
                 connectionSocket.close();
             } else {
+                System.out.println("Unknow Command: socket closing");
                 connectionSocket.close();
             }
         }
@@ -107,6 +110,9 @@ public class TCPServer {
     }
 
     public static String[] browse() throws FileNotFoundException, IOException {
+        // we use file as a database
+        // data format : name value type
+        // open file and establish input stream
         File fileName = new File("recorddatabase.txt");
 
         FileInputStream fis = new FileInputStream(fileName);
@@ -114,11 +120,27 @@ public class TCPServer {
 
         String line = null;
         String value = null;
-
+        // records array will holds the return value
         ArrayList<String> records = new ArrayList();
+
+        // basically we read a line which is "name value type"
+        // and we pharse the string to get name and type filed and put them in to a string
+
+        // pharse string
         while ((line = b.readLine()) != null) {
-            String[] record = line.split(" ");
+            // String[] record = line.split(" ");
+            String[] record = new String[3];
+            int i =0;
+            for(String s:line.split(" ")){
+              record[i]=s;
+              i++;
+            }
+            // put name and type field in to array
             records.add(record[0] + " " + record[2]);
+
+            for(int j=0;j<records.size();j++){
+              System.out.println(records.get(j));
+            }
         }
 
         b.close();
@@ -136,7 +158,7 @@ public class TCPServer {
 
         FileWriter f = new FileWriter(fileName, true);
 
-        f.write("\n" + record);
+        f.write(record+'\n');
         f.close();
 
     }
@@ -157,8 +179,8 @@ public class TCPServer {
         }
 
         b.close();
-        if (value.equals(null)) {
-            value = "Not Found";
+        if (value == null) {
+            value = "Error: Record Not Found";
         }
 
         return value;
@@ -182,7 +204,7 @@ public class TCPServer {
         }
 
         if (remove == null) {
-            remove = "Not Found";
+            remove = "Error: Record Not Found";
             return remove;
         }
 
@@ -230,33 +252,33 @@ public class TCPServer {
  * To run on an allv machine, when the server is run on allv25, type
  *       java TCPClient allv25.all.cs.stonybrook.edu YOUR_PORT_NUMBER
  *
- 
 
- import java.io.*; // Provides for system input and output through data 
+
+ import java.io.*; // Provides for system input and output through data
  // streams, serialization and the file system
- import java.net.*; // Provides the classes for implementing networking 
+ import java.net.*; // Provides the classes for implementing networking
  // applications
 
  // TCP Client class
  class TCPClient {
- public static void main(String argv[]) throws Exception 
- { 
- String sentence; 
- String modifiedSentence; 
+ public static void main(String argv[]) throws Exception
+ {
+ String sentence;
+ String modifiedSentence;
 
  // get the server port form command line
  int lisPort = Integer.parseInt(argv[1]);
 
  // create an input stream from the System.in
- BufferedReader inFromUser = 
+ BufferedReader inFromUser =
  new BufferedReader(new InputStreamReader(System.in));
 
  // create a client socket (TCP) and connect to server
  Socket clientSocket = new Socket(argv[0], lisPort);
 
  // create an output stream from the socket output stream
- DataOutputStream outToServer = 
- new DataOutputStream(clientSocket.getOutputStream()); 
+ DataOutputStream outToServer =
+ new DataOutputStream(clientSocket.getOutputStream());
 
  // create an input stream from the socket input stream
  BufferedReader inFromServer = new BufferedReader(
@@ -285,10 +307,10 @@ public class TCPServer {
 /*To compile on an allv machine, type
  *       javac TCPServer.java
  *
- * To run an allv machine, type 
+ * To run an allv machine, type
  *       java TCPServer YOUR_PORT_NUMBER
  *
- 
+
 
  import java.io.*; // Provides for system input and output through data
  // streams, serialization and the file system
@@ -296,47 +318,47 @@ public class TCPServer {
  // applications
 
  class TCPServer {
- public static void main(String argv[]) throws Exception 
- { 
- String clientSentence; 
+ public static void main(String argv[]) throws Exception
+ {
+ String clientSentence;
  String capitalizedSentence;
 
  // get the port number assigned from the command line
  int lisPort = Integer.parseInt(argv[0]);
 
  // create a server socket (TCP)
- ServerSocket welcomeSocket = new ServerSocket(lisPort); 
+ ServerSocket welcomeSocket = new ServerSocket(lisPort);
 
  // loop infinitely (process clients sequentially)
  while(true) {
  // Wait and accept client connection
- Socket connectionSocket = welcomeSocket.accept(); 
+ Socket connectionSocket = welcomeSocket.accept();
 
  //create an input stream from the socket input stream
  BufferedReader inFromClient = new BufferedReader(
- new InputStreamReader(connectionSocket.getInputStream())); 
+ new InputStreamReader(connectionSocket.getInputStream()));
 
  // create an output stream from the socket output stream
- DataOutputStream  outToClient = 
- new DataOutputStream(connectionSocket.getOutputStream()); 
+ DataOutputStream  outToClient =
+ new DataOutputStream(connectionSocket.getOutputStream());
 
  // read a line form the input stream
- clientSentence = inFromClient.readLine(); 
+ clientSentence = inFromClient.readLine();
 
  // capitalize the sentence
- capitalizedSentence = clientSentence.toUpperCase() + '\n'; 
+ capitalizedSentence = clientSentence.toUpperCase() + '\n';
 
  System.out.println("Hello world!");
  System.out.println("input is: " + clientSentence);
  System.out.println("output is: " + capitalizedSentence);
-                        
+
  // send the capitalized sentence back to the  client
  outToClient.writeBytes(capitalizedSentence);
 
  // close the connection socket
  connectionSocket.close();
- } 
- } 
- } 
+ }
+ }
+ }
 
  */

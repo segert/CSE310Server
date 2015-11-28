@@ -1,6 +1,0 @@
-google.com 1.2.3.4 N
-google.com 1.2.3.4 N
-hello.com 1.4.2.1 N
-google.com 1.3.4.5 N
-pronhub.com 2.3.4.5 N
-wei.com 1.2.3.5 N

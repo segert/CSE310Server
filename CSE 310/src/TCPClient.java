@@ -4,13 +4,18 @@ import java.net.*;
 public class TCPClient{
 
   public static void main (String argv[]) throws Exception{
-
+    //sentence for user Input
+    // modifiedsentence for server return
     String sentence;
     String modifiedSentence;
-
+    if(argv.length != 2){
+      System.out.println("missing Host or port number");
+      System.exit(-1);
+    }
     BufferedReader inFromUser =
     new BufferedReader(new InputStreamReader(System.in));
     System.out.println("Connecting to "+argv[0]+" on port "+5858);
+    System.out.println("Connection with manager established");
 
 
     while(true){
@@ -18,9 +23,7 @@ public class TCPClient{
       try{
         // create a client socket (TCP) and connect to manager application
         Socket clientSocket = new Socket(argv[0], 5858);
-
-        System.out.println("Connection established");
-        System.out.println("Please Enter Command");
+        System.out.println("Please Enter Manager Command:");
 
         // create an output stream from the socket output stream
         DataOutputStream outToServer =
@@ -59,13 +62,14 @@ public class TCPClient{
           }else{
 
             int DNSportNumber = Integer.parseInt(modifiedSentence);
-            System.out.println(DNSportNumber);
+            // System.out.println(DNSportNumber);
             // now we get the port number
             // close connection with manager and connect to a DNS
 
             clientSocket.close();
             clientSocket = new Socket(argv[0], DNSportNumber);
             // run a sub client method for DNS server
+            System.out.println("Connected to type "+ cmdLine[1]+" DNS server on port "+DNSportNumber);
             subClient(argv[0],DNSportNumber);
 
             System.out.println("Disconnection from DNS server, reconnect with manager");
@@ -77,6 +81,8 @@ public class TCPClient{
 
           // connect to DNS Server
           // clientSocket = new Socket()
+        }else{
+          System.out.println("Unknow manager command.");
         }
         // close the socket
         clientSocket.close();
@@ -98,6 +104,7 @@ public class TCPClient{
       try{
         Socket clientSocket = new Socket(host, port);
 
+
         // create an output stream from the socket output stream
         DataOutputStream outToServer =
         new DataOutputStream(clientSocket.getOutputStream());
@@ -105,7 +112,7 @@ public class TCPClient{
         // create an input stream from the socket input stream
         DataInputStream inFromServer = new DataInputStream(clientSocket.getInputStream());
 
-
+        System.out.println("please enter DNS command:");
         sentence = inFromUser.readLine();
         // if user input is help print out help menue
         if (sentence.equals("help")){

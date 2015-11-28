@@ -100,7 +100,7 @@ class ClientServiceThread extends Thread{
 
         String[] args = clientSentence.split(" ");
         String command = args[0];
-
+        // if else statement to run different command
         if (command.equals("put") && args.length == 3) {
           // record format: name ip_address type
           String record = args[1] + " " + args[2] + " " + serverType;
@@ -111,16 +111,13 @@ class ClientServiceThread extends Thread{
           String name = args[1];
           String type = serverType;
           String value = get(name, type);
-
           outToClient.writeUTF(value);
           connectionSocket.close();
         } else if (command.equals("del") && args.length == 2) {
           String name = args[1];
           String type = serverType;
           String value = delete(name, type);
-
           outToClient.writeUTF("record: "+value+" deleted");
-
           connectionSocket.close();
         } else if (command.equals("browse") && args.length == 1) {
           String[] recarray = browse(serverType);
@@ -139,6 +136,8 @@ class ClientServiceThread extends Thread{
         } else if(command.equals("exit")&&args.length ==1) {
           running = false;
           System.out.println("Thread exit");
+          connectionSocket.close();
+
         }else {
           System.out.println("Unknow Command: socket closing");
           connectionSocket.close();
@@ -153,6 +152,10 @@ class ClientServiceThread extends Thread{
 
     //end of run
   }
+
+  /*
+  a bunch of helper function for put, del ,get and browse records
+  */
   public static void put(String record, String serverType) throws FileNotFoundException, IOException {
     File fileName = new File(serverType+".txt");
     if(!fileName.exists()){

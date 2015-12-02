@@ -14,7 +14,7 @@ public class TCPClient{
     }
     BufferedReader inFromUser =
     new BufferedReader(new InputStreamReader(System.in));
-    System.out.println("Connecting to "+argv[0]+" on port "+5858);
+    System.out.println("Connecting to "+argv[0]+" on port "+ Integer.parseInt(argv[1]));
     System.out.println("Connection with manager established");
 
 
@@ -22,7 +22,7 @@ public class TCPClient{
       // try connect to server
       try{
         // create a client socket (TCP) and connect to manager application
-        Socket clientSocket = new Socket(argv[0], 5858);
+        Socket clientSocket = new Socket(argv[0], Integer.parseInt(argv[1]));
         System.out.println("Please Enter Manager Command:");
 
         // create an output stream from the socket output stream

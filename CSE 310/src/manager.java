@@ -53,6 +53,8 @@ public class manager{
 
     while(true){
       Socket clientSocket = welcomeSocket.accept();
+      System.out.println("client connected");
+
       ManagerServiceThread MThread = new ManagerServiceThread(clientSocket,serverRecords);
       MThread.start();
     }

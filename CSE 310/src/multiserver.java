@@ -1,9 +1,3 @@
-/*
-* To change this license header, choose License Headers in Project Properties.
-* To change this template file, choose Tools | Templates
-* and open the template in the editor.
-*/
-
 import java.io.*;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -21,49 +15,28 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+
 /*
-To compile on an allv machine, type
-*       javac TCPServer.java
-*
-* To run an allv machine, type
-*       java TCPServer YOUR_PORT_NUMBER
-*
+
+multiserver's System.in and System.out are piped with manager application
+
 */
-// applications
-
-public class multiserver extends Thread{
-  ServerSocket m_ServerSocket;
-   String serverType;
-  //constructor
-  multiserver(String givenType){
-    try{
-      m_ServerSocket=new ServerSocket(0);
-    }catch(Exception e){
-    }
-    serverType = givenType;
-  }
-
-  public  String getport(){
-    String r = String.valueOf(m_ServerSocket.getLocalPort());
-    return r;
-  }
-
-  public void run() {
-    System.out.println("Type " + serverType + " Server run on port "+ m_ServerSocket.getLocalPort());
-
+public class multiserver{
+  public static void main(String[] args) throws Exception{
+    // assign socket on a random available socket
+    ServerSocket m_ServerSocket = new ServerSocket(0);
+    // pipe the port number to manager
+    System.out.println(m_ServerSocket.getLocalPort());
+    // read serverType from manager
+    DataInputStream in = new DataInputStream(
+    new DataInputStream(System.in));
+    String serverType = in.readUTF();
+    // listening
     while(true){
       // socket created
-      try{
-        Socket clientSocket = m_ServerSocket.accept();
-
-        System.out.println("socket accepted");
-        ClientServiceThread cliThread = new ClientServiceThread(clientSocket,serverType);
-        System.out.println("thread creaded");
-
-        cliThread.start();
-      }catch(Exception e){
-
-      }
+      Socket clientSocket = m_ServerSocket.accept();
+      ClientServiceThread cliThread = new ClientServiceThread(clientSocket,serverType);
+      cliThread.start();
     }
   }
 }
@@ -81,28 +54,22 @@ class ClientServiceThread extends Thread{
 
   public void run() {
     String clientSentence;
-    //start of run
-    System.out.println("connection accepted from "+connectionSocket.getRemoteSocketAddress());
     try{
       //create an input stream from the socket input stream
-      DataInputStream inFromClient = new DataInputStream(
-      new DataInputStream(connectionSocket.getInputStream()));
+      DataInputStream inFromClient
+      = new DataInputStream(new DataInputStream(connectionSocket.getInputStream()));
 
       // create an output stream from the socket output stream
       DataOutputStream outToClient
       = new DataOutputStream(connectionSocket.getOutputStream());
+
       while (running) {
-
-
-        // read a line form the input stream
+        // read a line form the input stream and split
         clientSentence = inFromClient.readUTF();
-        System.out.println("command recieve: "+ clientSentence);
-
         String[] args = clientSentence.split(" ");
         String command = args[0];
-        // if else statement to run different command
+        // command processing
         if (command.equals("put") && args.length == 3) {
-          // record format: name ip_address type
           String record = args[1] + " " + args[2] + " " + serverType;
           put(record,serverType);
           outToClient.writeUTF("record "+record+" successfully put in database");
@@ -111,13 +78,16 @@ class ClientServiceThread extends Thread{
           String name = args[1];
           String type = serverType;
           String value = get(name, type);
+
           outToClient.writeUTF(value);
           connectionSocket.close();
         } else if (command.equals("del") && args.length == 2) {
           String name = args[1];
           String type = serverType;
           String value = delete(name, type);
+
           outToClient.writeUTF("record: "+value+" deleted");
+
           connectionSocket.close();
         } else if (command.equals("browse") && args.length == 1) {
           String[] recarray = browse(serverType);
@@ -135,11 +105,11 @@ class ClientServiceThread extends Thread{
           connectionSocket.close();
         } else if(command.equals("exit")&&args.length ==1) {
           running = false;
-          System.out.println("Thread exit");
           connectionSocket.close();
-
+          System.exit(0);
+          // System.out.println("Thread exit");
         }else {
-          System.out.println("Unknow Command: socket closing");
+          // System.out.println("Unknow Command: socket closing");
           connectionSocket.close();
         }
       }
@@ -148,14 +118,10 @@ class ClientServiceThread extends Thread{
     } catch (Exception e) {
       // e.printStackTrace();
     }
-
-
     //end of run
   }
 
-  /*
-  a bunch of helper function for put, del ,get and browse records
-  */
+  // helper method basic file I/O stuff
   public static void put(String record, String serverType) throws FileNotFoundException, IOException {
     File fileName = new File(serverType+".txt");
     if(!fileName.exists()){
@@ -167,7 +133,7 @@ class ClientServiceThread extends Thread{
     f.close();
 
   }
-
+  // helper method
   public static String get(String name, String type) throws FileNotFoundException, IOException {
     File fileName = new File(type+".txt");
     if(!fileName.exists()){
@@ -193,13 +159,11 @@ class ClientServiceThread extends Thread{
     return value;
 
   }
-
+  // helper method
   public static String delete(String name, String type) throws FileNotFoundException, IOException {
     File inputFile = new File(type+".txt");
     File temp = new File("myTempFile.txt");
-    if(!inputFile.exists()){
-      inputFile.createNewFile();
-    }
+
     FileInputStream fis = new FileInputStream(inputFile);
     BufferedReader b = new BufferedReader(new InputStreamReader(fis));
 
@@ -251,7 +215,7 @@ class ClientServiceThread extends Thread{
 
     return remove;
   }
-
+  // helper method
   public static String[] browse(String serverType) throws FileNotFoundException, IOException {
     // we use file as a database
     // data format : name value type

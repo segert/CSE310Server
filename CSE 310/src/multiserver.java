@@ -103,11 +103,6 @@ class ClientServiceThread extends Thread{
           outToClient.writeUTF(result);
 
           connectionSocket.close();
-        } else if(command.equals("exit")&&args.length ==1) {
-          running = false;
-          connectionSocket.close();
-          System.exit(0);
-          // System.out.println("Thread exit");
         }else {
           // System.out.println("Unknow Command: socket closing");
           connectionSocket.close();

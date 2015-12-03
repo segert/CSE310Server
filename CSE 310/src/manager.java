@@ -102,8 +102,6 @@ class ManagerServiceThread extends Thread{
         else {
           System.out.println("Unknow Command: socket closing");
           connectionSocket.close();
-
-
         }
       }
 

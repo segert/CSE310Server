@@ -8,6 +8,7 @@ public class TCPClient{
     // modifiedsentence for server return
     String sentence;
     String modifiedSentence;
+    int port = Integer.parseInt(argv[1]);
     if(argv.length != 2){
       System.out.println("missing Host or port number");
       System.exit(-1);
@@ -22,7 +23,7 @@ public class TCPClient{
       // try connect to server
       try{
         // create a client socket (TCP) and connect to manager application
-        Socket clientSocket = new Socket(argv[0], Integer.parseInt(argv[1]));
+        Socket clientSocket = new Socket(argv[0], port);
         System.out.println("Please Enter Manager Command:");
 
         // create an output stream from the socket output stream
@@ -130,6 +131,11 @@ public class TCPClient{
           System.out.println("Closing socket");
           outToServer.writeUTF("");
           return;
+        }else if(sentence.equals("exit")){
+          System.out.println("Closing socket");
+          outToServer.writeUTF("");
+          clientSocket.close();
+          System.exit(0);
         }
         else{
           // send the sentence read to the server
